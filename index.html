@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gujarati SER - Audio Recorder with Preprocessing</title>
+    <script src="https://cdn.jsdelivr.net/npm/wavesurfer.js@7"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { color: #333; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #333; font-weight: 600; font-size: 14px; }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .emotions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .emotion-btn {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .emotion-btn:hover { border-color: #667eea; }
+        .emotion-btn.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .recording-section {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .mic-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid #667eea;
+            background: white;
+            cursor: pointer;
+            font-size: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            transition: all 0.3s;
+        }
+        .mic-button:hover { background: #f0f0f0; }
+        .mic-button.recording {
+            background: #e74c3c;
+            border-color: #e74c3c;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+        }
+        .timer { font-size: 18px; font-weight: bold; color: #667eea; margin: 10px 0; }
+        .button-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .primary-btn {
+            background: #667eea;
+            color: white;
+            grid-column: 1 / -1;
+        }
+        .primary-btn:hover { background: #5568d3; }
+        .primary-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .secondary-btn {
+            background: #e0e0e0;
+            color: #333;
+        }
+        .secondary-btn:hover { background: #d0d0d0; }
+        .download-btn {
+            background: #27ae60;
+            color: white;
+            grid-column: 1 / -1;
+            margin-top: 10px;
+        }
+        .download-btn:hover { background: #229954; }
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 13px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .warning { background: #fff3cd; color: #856404; }
+        .hidden { display: none; }
+        .audio-player { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        audio { width: 100%; }
+        .quality-meter { margin: 10px 0; }
+        .meter-bar { height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
+        .meter-fill { height: 100%; background: linear-gradient(90deg, #27ae60, #f39c12, #e74c3c); }
+        .processing { text-align: center; padding: 20px; }
+        .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Gujarati SER</h1>
+        <p class="subtitle">Speech Emotion Recognition - Audio Collection (48kHz WAV)</p>
+
+        <!-- Participant Form -->
+        <div id="formSection">
+            <div class="form-group">
+                <label>Participant Type *</label>
+                <select id="type">
+                    <option value="child">Child (5-17 years)</option>
+                    <option value="adult">Adult (18+ years)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Age *</label>
+                <input type="number" id="age" min="5" max="110" placeholder="Enter age">
+            </div>
+
+            <div class="form-group">
+                <label>Gender *</label>
+                <select id="gender">
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Prefer not to say</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Gujarati Dialect *</label>
+                <select id="dialect">
+                    <option value="">Select dialect</option>
+                    <option value="central">Central Gujarati</option>
+                    <option value="north">North Gujarati</option>
+                    <option value="south">South Gujarati</option>
+                    <option value="saurashtra">Saurashtra</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Select Emotion *</label>
+                <div class="emotions">
+                    <button type="button" class="emotion-btn" data-emotion="angry">😠 Angry</button>
+                    <button type="button" class="emotion-btn" data-emotion="calm">😌 Calm</button>
+                    <button type="button" class="emotion-btn" data-emotion="fearful">😨 Fearful</button>
+                    <button type="button" class="emotion-btn" data-emotion="happy">😊 Happy</button>
+                    <button type="button" class="emotion-btn" data-emotion="neutral">😐 Neutral</button>
+                    <button type="button" class="emotion-btn" data-emotion="sad">😢 Sad</button>
+                    <button type="button" class="emotion-btn" data-emotion="surprised">😲 Surprised</button>
+                </div>
+            </div>
+
+            <button class="primary-btn" id="startBtn">Start Recording</button>
+        </div>
+
+        <!-- Recording Section -->
+        <div id="recordingSection" class="hidden">
+            <div class="recording-section">
+                <p>🎤 Recording...</p>
+                <div class="timer" id="timer">0:00</div>
+                <div class="quality-meter">
+                    <p style="font-size: 12px; color: #666; margin-bottom: 5px;">Audio Level:</p>
+                    <div class="meter-bar">
+                        <div class="meter-fill" id="levelMeter" style="width: 0%;"></div>
+                    </div>
+                </div>
+                <button class="mic-button recording" id="stopBtn">⏹️</button>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">Click to stop recording</p>
+            </div>
+            <div id="recordingMessage"></div>
+        </div>
+
+        <!-- Processing Section -->
+        <div id="processingSection" class="hidden">
+            <div class="processing">
+                <div class="spinner"></div>
+                <p style="margin-top: 15px; color: #666;">Processing audio...</p>
+                <p style="font-size: 12px; color: #999; margin-top: 5px;">Converting to 48kHz WAV, normalizing, checking quality...</p>
+            </div>
+        </div>
+
+        <!-- Download Section -->
+        <div id="downloadSection" class="hidden">
+            <div class="message success" id="successMsg"></div>
+            <div class="audio-player">
+                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">📢 Play your processed recording:</p>
+                <audio id="audioPlayer" controls></audio>
+            </div>
+            <div id="qualityInfo" class="message info"></div>
+            <button class="download-btn" id="downloadBtn">⬇️ Download WAV File</button>
+            <div class="button-group">
+                <button class="secondary-btn" id="resetBtn">Record Another</button>
+            </div>
+        </div>
+
+        <div id="message"></div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let timerInterval;
+        let seconds = 0;
+        let selectedEmotion = null;
+        let audioContext = null;
+        let analyser = null;
+        let microphone = null;
+
+        const type = document.getElementById('type');
+        const age = document.getElementById('age');
+        const gender = document.getElementById('gender');
+        const dialect = document.getElementById('dialect');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const emotionBtns = document.querySelectorAll('.emotion-btn');
+        const formSection = document.getElementById('formSection');
+        const recordingSection = document.getElementById('recordingSection');
+        const processingSection = document.getElementById('processingSection');
+        const downloadSection = document.getElementById('downloadSection');
+        const timer = document.getElementById('timer');
+        const message = document.getElementById('message');
+        const successMsg = document.getElementById('successMsg');
+        const qualityInfo = document.getElementById('qualityInfo');
+        const levelMeter = document.getElementById('levelMeter');
+
+        // Emotion selection
+        emotionBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                emotionBtns.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedEmotion = btn.dataset.emotion;
+            });
+        });
+
+        function validateForm() {
+            if (!age.value || !gender.value || !dialect.value || !selectedEmotion) {
+                showMessage('Please fill all fields', 'error');
+                return false;
+            }
+            if (type.value === 'child' && (age.value < 5 || age.value > 17)) {
+                showMessage('Child age must be 5-17', 'error');
+                return false;
+            }
+            if (type.value === 'adult' && (age.value < 18 || age.value > 110)) {
+                showMessage('Adult age must be 18+', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        startBtn.addEventListener('click', async () => {
+            if (!validateForm()) return;
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                // Setup audio analysis
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 2048;
+                microphone = audioContext.createMediaStreamSource(stream);
+                microphone.connect(analyser);
+
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                seconds = 0;
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    processAudio();
+                };
+
+                mediaRecorder.start();
+                formSection.classList.add('hidden');
+                recordingSection.classList.remove('hidden');
+                downloadSection.classList.add('hidden');
+
+                // Timer
+                timerInterval = setInterval(() => {
+                    seconds++;
+                    const mins = Math.floor(seconds / 60);
+                    const secs = seconds % 60;
+                    timer.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+                    if (seconds >= 300) stopRecording();
+                }, 1000);
+
+                // Level monitoring
+                monitorLevel();
+            } catch (err) {
+                showMessage('❌ Microphone error. Please check permissions.', 'error');
+            }
+        });
+
+        function monitorLevel() {
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            const animate = () => {
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    sum += dataArray[i];
+                }
+                const level = (sum / dataArray.length) / 255 * 100;
+                levelMeter.style.width = Math.min(level, 100) + '%';
+
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    requestAnimationFrame(animate);
+                }
+            };
+            animate();
+        }
+
+        stopBtn.addEventListener('click', stopRecording);
+
+        function stopRecording() {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            clearInterval(timerInterval);
+        }
+
+        async function processAudio() {
+            formSection.classList.add('hidden');
+            recordingSection.classList.add('hidden');
+            processingSection.classList.remove('hidden');
+
+            try {
+                // Create audio blob and decode
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const arrayBuffer = await audioBlob.arrayBuffer();
+                const decoded = await audioContext.decodeAudioData(arrayBuffer);
+
+                // Resample to 48kHz
+                const resampled = resampleAudio(decoded, 48000);
+
+                // Normalize audio
+                const normalized = normalizeAudio(resampled);
+
+                // Quality check
+                const quality = checkQuality(normalized);
+
+                // Convert to WAV
+                const wavBlob = encodeWAV(normalized, 48000);
+
+                // Create download link
+                const audioUrl = URL.createObjectURL(wavBlob);
+                document.getElementById('audioPlayer').src = audioUrl;
+
+                // File info
+                const timestamp = new Date().toISOString().split('T')[0];
+                const filename = `${type.value}-${age.value}-${gender.value}-${selectedEmotion}-${timestamp}-48kHz.wav`;
+
+                successMsg.textContent = `✓ Recording processed: ${filename}`;
+                qualityInfo.innerHTML = `
+                    <strong>Audio Quality Report:</strong><br>
+                    Peak Level: ${(quality.peakLevel * 100).toFixed(1)}%<br>
+                    Duration: ${(normalized.length / 48000).toFixed(2)}s<br>
+                    Format: 48kHz Mono WAV
+                `;
+
+                if (quality.peakLevel < 0.1) {
+                    qualityInfo.innerHTML += '<br>⚠️ Warning: Audio is very quiet. Please re-record closer to microphone.';
+                }
+
+                downloadBtn.onclick = () => downloadAudio(wavBlob, filename);
+
+                processingSection.classList.add('hidden');
+                downloadSection.classList.remove('hidden');
+
+            } catch (err) {
+                showMessage('❌ Processing error: ' + err.message, 'error');
+                processingSection.classList.add('hidden');
+                formSection.classList.remove('hidden');
+            }
+        }
+
+        function resampleAudio(audioBuffer, targetSampleRate) {
+            const sourceData = audioBuffer.getChannelData(0);
+            const sourceSampleRate = audioBuffer.sampleRate;
+            const ratio = sourceSampleRate / targetSampleRate;
+            const newLength = Math.round(sourceData.length / ratio);
+            const resampled = new Float32Array(newLength);
+
+            let offsetResult = 0;
+            let offsetSource = 0;
+            while (offsetResult < newLength) {
+                const nextSourceSamplePosition = Math.min(offsetSource + ratio, sourceData.length - 1);
+                const nextSourceSampleIndex = Math.floor(nextSourceSamplePosition);
+                const fractionBetweenSamples = nextSourceSamplePosition - nextSourceSampleIndex;
+
+                const sample0 = sourceData[Math.floor(offsetSource)];
+                const sample1 = sourceData[Math.ceil(offsetSource)] || sample0;
+
+                resampled[offsetResult] = sample0 * (1 - fractionBetweenSamples) + sample1 * fractionBetweenSamples;
+                offsetResult++;
+                offsetSource += ratio;
+            }
+            return resampled;
+        }
+
+        function normalizeAudio(audioData) {
+            let maxVal = 0;
+            for (let i = 0; i < audioData.length; i++) {
+                maxVal = Math.max(maxVal, Math.abs(audioData[i]));
+            }
+
+            const normalized = new Float32Array(audioData.length);
+            const factor = maxVal > 0 ? 0.95 / maxVal : 1;
+
+            for (let i = 0; i < audioData.length; i++) {
+                normalized[i] = audioData[i] * factor;
+            }
+
+            return normalized;
+        }
+
+        function checkQuality(audioData) {
+            let max = 0;
+            for (let i = 0; i < audioData.length; i++) {
+                max = Math.max(max, Math.abs(audioData[i]));
+            }
+            return { peakLevel: max };
+        }
+
+        function encodeWAV(samples, sampleRate) {
+            const buffer = new ArrayBuffer(44 + samples.length * 2);
+            const view = new DataView(buffer);
+
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+
+            const subChunk2Size = samples.length * 2;
+            const subChunk1Size = 16;
+            const audioFormat = 1;
+            const numChannels = 1;
+            const byteRate = sampleRate * numChannels * 2;
+            const blockAlign = numChannels * 2;
+            const bitsPerSample = 16;
+
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + subChunk2Size, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, subChunk1Size, true);
+            view.setUint16(20, audioFormat, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, byteRate, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitsPerSample, true);
+            writeString(36, 'data');
+            view.setUint32(40, subChunk2Size, true);
+
+            let index = 44;
+            for (let i = 0; i < samples.length; i++) {
+                const sample = Math.max(-1, Math.min(1, samples[i]));
+                view.setInt16(index, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                index += 2;
+            }
+
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        function downloadAudio(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+
+            setTimeout(() => {
+                a.click();
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    showMessage('✓ WAV file downloaded! Email to: aymljku@gmail.com', 'success');
+                }, 100);
+            }, 100);
+        }
+
+        resetBtn.addEventListener('click', () => {
+            selectedEmotion = null;
+            emotionBtns.forEach(b => b.classList.remove('selected'));
+            formSection.classList.remove('hidden');
+            downloadSection.classList.add('hidden');
+            message.innerHTML = '';
+        });
+
+        function showMessage(text, type) {
+            message.innerHTML = `<div class="message ${type}">${text}</div>`;
+        }
+    </script>
+</body>
+</html>
