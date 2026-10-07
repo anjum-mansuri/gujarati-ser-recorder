@@ -148,6 +148,11 @@
         <!-- Participant Form -->
         <div id="formSection">
             <div class="form-group">
+                <label>Name (Optional)</label>
+                <input type="text" id="nameInput" placeholder="Enter participant name">
+            </div>
+
+            <div class="form-group">
                 <label>Participant Type *</label>
                 <select id="type">
                     <option value="child">Child (5-17 years)</option>
@@ -396,7 +401,8 @@
 
                 // Generate unique ID
                 const uniqueId = Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
-                const filename = `GSR-${uniqueId}-${type.value}-${age.value}-${gender.value}-${dialect.value}-${selectedEmotion}-48kHz.wav`;
+                const participantName = type.value === 'child' ? 'child' : (document.getElementById('nameInput').value || 'participant');
+                const filename = `${participantName}-${age.value}-${uniqueId}-48kHz.wav`;
 
                 successMsg.textContent = `✓ Recording processed: ${filename}`;
                 qualityInfo.innerHTML = `
