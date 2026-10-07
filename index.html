@@ -205,6 +205,11 @@
 
         <!-- Recording Section -->
         <div id="recordingSection" class="hidden">
+            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
+                <p style="font-size: 12px; color: #856404; margin: 0 0 8px 0; font-weight: 600;">📝 Suggested to say:</p>
+                <p id="gujaratiSuggestion" style="font-size: 16px; color: #333; margin: 0; font-weight: 500;"></p>
+                <p id="englishTranslation" style="font-size: 12px; color: #666; margin: 8px 0 0 0; font-style: italic;"></p>
+            </div>
             <div class="recording-section">
                 <p>🎤 Recording...</p>
                 <div class="timer" id="timer">0:00</div>
@@ -260,6 +265,104 @@
         let audioContext = null;
         let analyser = null;
         let microphone = null;
+
+        // Gujarati sentence suggestions for each emotion with English translations
+        const gujaratiSentences = {
+            angry: {
+                sentences: [
+                    "આ શું છે? તમે મને કેમ એમ કર્યું?",
+                    "હું ખૂબ નારાજ છું અને તમનો કોઈ સમર્થન નથી છે!",
+                    "આ અસ્વીકાર્ય છે અને મને આ બધું ખતમ કરવું છે!"
+                ],
+                translations: [
+                    "What is this? Why did you do this to me?",
+                    "I am very angry and have no support from you!",
+                    "This is unacceptable and I need to end this!"
+                ]
+            },
+            calm: {
+                sentences: [
+                    "હું શાંત છું અને વધુ સારું અનુભવ કરું છું.",
+                    "સમસ્યાઓ હંમેશા ઉકેલી શકાય છે અને હું તેને સમજું છું.",
+                    "આજ એક સુંદર દિવસ છે અને હું તેનો આનંદ લઈ રહ્યો છું."
+                ],
+                translations: [
+                    "I am calm and feeling better.",
+                    "Problems can always be solved and I understand that.",
+                    "Today is a beautiful day and I'm enjoying it."
+                ]
+            },
+            fearful: {
+                sentences: [
+                    "મને ડર લાગે છે, શું આ સલામત છે?",
+                    "કૃપા કરીને મને સાથે રહો, મને એકલો વર્તવું નથી છે.",
+                    "આ શું થશે? મને ખબર નથી છે અને મને ડર લાગે છે."
+                ],
+                translations: [
+                    "I'm afraid, is this safe?",
+                    "Please stay with me, I don't want to be alone.",
+                    "What will happen? I don't know and I'm scared."
+                ]
+            },
+            happy: {
+                sentences: [
+                    "હું ખૂબ ખુશ છું અને આનંદિત છું!",
+                    "આ ખરેખર એક અદ્ભુત દિવસ છે અને હું તેનો સાથે છું!",
+                    "મારો હૃદય આનંદથી ભરેલો છે અને હું હસતો અટકી શકતો નથી!"
+                ],
+                translations: [
+                    "I am very happy and delighted!",
+                    "This is really a wonderful day and I'm with it!",
+                    "My heart is filled with joy and I can't stop smiling!"
+                ]
+            },
+            neutral: {
+                sentences: [
+                    "આજ બીજો દિવસ છે.",
+                    "મને કોઈ વિશેષ લાગણી આવતી નથી, બસ સામાન્ય દિવસ છે.",
+                    "તે જે છે તે છે, કંઈ આશ્ચર્ય નથી."
+                ],
+                translations: [
+                    "Today is another day.",
+                    "I don't have any special feelings, just an ordinary day.",
+                    "It is what it is, nothing surprising."
+                ]
+            },
+            sad: {
+                sentences: [
+                    "મને ખૂબ દુઃખ છે અને એકલો અનુભવ કરું છું.",
+                    "હું આશા કરતો હતો પણ મને નિરાશા મળી.",
+                    "આ બધું ખરાબ હોય છે અને મનોદશા ખરાબ છે."
+                ],
+                translations: [
+                    "I'm very sad and feeling alone.",
+                    "I was hoping but got disappointed.",
+                    "Everything is bad and my mood is low."
+                ]
+            },
+            surprised: {
+                sentences: [
+                    "આ તો ખરેખર આશ્ચર્યજનક છે!",
+                    "હું આ સંભાવતો ન હતો, આ ખરેખર આશ્ચર્ય છે!",
+                    "ઓહો! આ તો એક મોટો આશ્ચર્ય છે જે મને લાગતો નથી હતો!"
+                ],
+                translations: [
+                    "This is really surprising!",
+                    "I didn't expect this, it's really a surprise!",
+                    "Oh! This is a big surprise I didn't anticipate!"
+                ]
+            }
+        };
+
+        function getRandomSentence(emotion) {
+            const sentences = gujaratiSentences[emotion].sentences;
+            const translations = gujaratiSentences[emotion].translations;
+            const randomIndex = Math.floor(Math.random() * sentences.length);
+            return {
+                gujarati: sentences[randomIndex],
+                english: translations[randomIndex]
+            };
+        }
 
         const type = document.getElementById('type');
         const age = document.getElementById('age');
@@ -336,6 +439,12 @@
                 formSection.classList.add('hidden');
                 recordingSection.classList.remove('hidden');
                 downloadSection.classList.add('hidden');
+
+                // Show Gujarati sentence suggestion
+                const emotionKey = type.value === 'child' ? selectedEmotion : (emotionBtns[emotionIndex] ? emotionBtns[emotionIndex].dataset.emotion : selectedEmotion);
+                const sentence = getRandomSentence(selectedEmotion);
+                document.getElementById('gujaratiSuggestion').textContent = sentence.gujarati;
+                document.getElementById('englishTranslation').textContent = `(${sentence.english})`;
 
                 // Timer
                 timerInterval = setInterval(() => {
