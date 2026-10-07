@@ -3,147 +3,479 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gujarati SER - Audio Recorder with Preprocessing</title>
-    <script src="https://cdn.jsdelivr.net/npm/wavesurfer.js@7"></script>
+    <title>Gujarati SER - Modern Audio Recorder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/gsap.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            overflow: hidden;
         }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Animated background particles */
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
         .container {
-            background: white;
-            border-radius: 12px;
-            padding: 40px;
-            max-width: 500px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 550px;
             width: 100%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2), 0 0 60px rgba(102, 126, 234, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            position: relative;
+            z-index: 10;
+            animation: slideUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        h1 { color: #333; margin-bottom: 10px; font-size: 28px; }
-        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #333; font-weight: 600; font-size: 14px; }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 32px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: fadeInDown 0.8s ease 0.1s both;
+        }
+
+        .subtitle {
+            color: #999;
+            margin-bottom: 35px;
+            font-size: 13px;
+            animation: fadeInDown 0.8s ease 0.2s both;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 22px;
+            animation: fadeInUp 0.8s ease both;
+        }
+
+        .form-group:nth-child(n+2) { animation-delay: 0.3s; }
+        .form-group:nth-child(n+3) { animation-delay: 0.4s; }
+        .form-group:nth-child(n+4) { animation-delay: 0.5s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+
         input, select {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            padding: 14px 16px;
+            border: 2px solid #e8e8e8;
+            border-radius: 12px;
             font-size: 14px;
-            transition: border-color 0.3s;
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
+
         input:focus, select:focus {
             outline: none;
             border-color: #667eea;
-        }
-        .emotions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .emotion-btn {
-            padding: 12px;
-            border: 2px solid #e0e0e0;
             background: white;
-            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .emotions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            animation: fadeInUp 0.8s ease 0.6s both;
+        }
+
+        .emotion-btn {
+            padding: 14px;
+            border: 2px solid #e8e8e8;
+            background: white;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 13px;
-            transition: all 0.3s;
-            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
         }
-        .emotion-btn:hover { border-color: #667eea; }
-        .emotion-btn.selected {
-            background: #667eea;
-            color: white;
+
+        .emotion-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .emotion-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .emotion-btn:hover {
             border-color: #667eea;
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
         }
+
+        .emotion-btn.selected {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            transform: scale(1.05);
+        }
+
         .recording-section {
-            background: #f5f5f5;
-            padding: 20px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, #f5f7fa, #e8ecf1);
+            padding: 30px;
+            border-radius: 16px;
             margin: 20px 0;
             text-align: center;
         }
+
         .mic-button {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             border: 3px solid #667eea;
             background: white;
             cursor: pointer;
-            font-size: 32px;
+            font-size: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 20px auto;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+            position: relative;
         }
-        .mic-button:hover { background: #f0f0f0; }
+
+        .mic-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.3);
+        }
+
         .mic-button.recording {
-            background: #e74c3c;
-            border-color: #e74c3c;
-            animation: pulse 1.5s infinite;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            border-color: transparent;
+            animation: recordingPulse 1.5s infinite;
         }
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
-            50% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+
+        @keyframes recordingPulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 0 20px rgba(231, 76, 60, 0);
+                transform: scale(1.05);
+            }
         }
-        .timer { font-size: 18px; font-weight: bold; color: #667eea; margin: 10px 0; }
-        .button-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+
+        .timer {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 15px 0;
+            letter-spacing: 2px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
         button {
-            padding: 12px;
+            padding: 14px 24px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
         }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: left 0.5s;
+            z-index: -1;
+        }
+
+        button:hover::before { left: 100%; }
+
         .primary-btn {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             grid-column: 1 / -1;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
         }
-        .primary-btn:hover { background: #5568d3; }
-        .primary-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        .primary-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .primary-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         .secondary-btn {
-            background: #e0e0e0;
+            background: rgba(232, 236, 241, 0.8);
             color: #333;
+            backdrop-filter: blur(10px);
         }
-        .secondary-btn:hover { background: #d0d0d0; }
+
+        .secondary-btn:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+        }
+
         .download-btn {
-            background: #27ae60;
+            background: linear-gradient(135deg, #27ae60, #229954);
             color: white;
             grid-column: 1 / -1;
             margin-top: 10px;
+            box-shadow: 0 10px 30px rgba(39, 174, 96, 0.3);
         }
-        .download-btn:hover { background: #229954; }
+
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(39, 174, 96, 0.4);
+        }
+
         .message {
-            padding: 12px;
-            border-radius: 8px;
+            padding: 14px;
+            border-radius: 12px;
             margin: 15px 0;
             text-align: center;
             font-size: 13px;
+            animation: slideInDown 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
-        .info { background: #d1ecf1; color: #0c5460; }
-        .warning { background: #fff3cd; color: #856404; }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border-left: 4px solid #27ae60;
+        }
+
+        .error {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .info {
+            background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+            color: #0c5460;
+            border-left: 4px solid #3498db;
+        }
+
+        .warning {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            color: #856404;
+            border-left: 4px solid #f39c12;
+        }
+
         .hidden { display: none; }
-        .audio-player { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 15px 0; }
+
+        .audio-player {
+            background: rgba(245, 245, 245, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 18px;
+            border-radius: 12px;
+            margin: 15px 0;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
         audio { width: 100%; }
-        .quality-meter { margin: 10px 0; }
-        .meter-bar { height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
-        .meter-fill { height: 100%; background: linear-gradient(90deg, #27ae60, #f39c12, #e74c3c); }
-        .processing { text-align: center; padding: 20px; }
-        .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .quality-meter { margin: 15px 0; }
+        .meter-bar {
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .meter-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60, #f39c12, #e74c3c);
+            animation: meterFlow 2s ease-in-out infinite;
+        }
+
+        @keyframes meterFlow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .processing {
+            text-align: center;
+            padding: 40px 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .suggestion-box {
+            background: linear-gradient(135deg, rgba(255, 243, 205, 0.9), rgba(255, 234, 167, 0.9));
+            backdrop-filter: blur(10px);
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 4px solid #f39c12;
+            animation: slideInLeft 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .suggestion-label {
+            font-size: 11px;
+            color: #856404;
+            margin-bottom: 8px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        #gujaratiSuggestion {
+            font-size: 16px;
+            color: #333;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        #englishTranslation {
+            font-size: 12px;
+            color: #856404;
+            margin: 8px 0 0 0;
+            font-style: italic;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎤 Gujarati SER</h1>
-        <p class="subtitle">Speech Emotion Recognition - Audio Collection (48kHz WAV)</p>
+        <p class="subtitle">Speech Emotion Recognition - Modern Recording Studio</p>
 
         <!-- Participant Form -->
         <div id="formSection">
@@ -200,37 +532,36 @@
                 </div>
             </div>
 
-            <button class="primary-btn" id="startBtn">Start Recording</button>
+            <button class="primary-btn" id="startBtn">🎙️ Start Recording</button>
         </div>
 
         <!-- Recording Section -->
         <div id="recordingSection" class="hidden">
-            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
-                <p style="font-size: 12px; color: #856404; margin: 0 0 8px 0; font-weight: 600;">📝 Suggested to say:</p>
-                <p id="gujaratiSuggestion" style="font-size: 16px; color: #333; margin: 0; font-weight: 500;"></p>
-                <p id="englishTranslation" style="font-size: 12px; color: #666; margin: 8px 0 0 0; font-style: italic;"></p>
+            <div class="suggestion-box">
+                <p class="suggestion-label">📝 Suggested to say:</p>
+                <p id="gujaratiSuggestion"></p>
+                <p id="englishTranslation"></p>
             </div>
             <div class="recording-section">
-                <p>🎤 Recording...</p>
+                <p style="font-size: 14px; color: #666; margin-bottom: 10px;">🎤 Recording...</p>
                 <div class="timer" id="timer">0:00</div>
                 <div class="quality-meter">
-                    <p style="font-size: 12px; color: #666; margin-bottom: 5px;">Audio Level:</p>
+                    <p style="font-size: 11px; color: #666; margin-bottom: 8px; font-weight: 600;">Audio Level:</p>
                     <div class="meter-bar">
                         <div class="meter-fill" id="levelMeter" style="width: 0%;"></div>
                     </div>
                 </div>
                 <button class="mic-button recording" id="stopBtn">⏹️</button>
-                <p style="font-size: 12px; color: #666; margin-top: 10px;">Click to stop recording</p>
+                <p style="font-size: 12px; color: #999; margin-top: 12px;">Click to stop</p>
             </div>
-            <div id="recordingMessage"></div>
         </div>
 
         <!-- Processing Section -->
         <div id="processingSection" class="hidden">
             <div class="processing">
                 <div class="spinner"></div>
-                <p style="margin-top: 15px; color: #666;">Processing audio...</p>
-                <p style="font-size: 12px; color: #999; margin-top: 5px;">Converting to 48kHz WAV, normalizing, checking quality...</p>
+                <p style="margin-top: 15px; color: #666; font-weight: 600;">Processing audio...</p>
+                <p style="font-size: 12px; color: #999; margin-top: 8px;">Converting to 48kHz WAV, optimizing quality...</p>
             </div>
         </div>
 
@@ -238,18 +569,18 @@
         <div id="downloadSection" class="hidden">
             <div class="message success" id="successMsg"></div>
             <div class="audio-player">
-                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">📢 Play your processed recording:</p>
+                <p style="font-size: 12px; color: #666; margin-bottom: 10px; font-weight: 600;">📢 Your Recording:</p>
                 <audio id="audioPlayer" controls></audio>
             </div>
             <div id="qualityInfo" class="message info"></div>
             <button class="download-btn" id="downloadBtn">⬇️ Download WAV File</button>
-            <button class="download-btn" style="background: #3498db; margin-top: 10px;" id="emailBtn">📧 Send via Email</button>
-            <div style="background: #e3f2fd; padding: 12px; border-radius: 8px; margin: 15px 0; font-size: 12px; color: #1565c0;">
+            <button class="download-btn" style="background: linear-gradient(135deg, #3498db, #2980b9);" id="emailBtn">📧 Send via Email</button>
+            <div style="background: linear-gradient(135deg, rgba(227, 242, 253, 0.9), rgba(190, 229, 235, 0.9)); padding: 14px; border-radius: 12px; margin: 15px 0; font-size: 12px; color: #0c5460; border-left: 4px solid #3498db;">
                 <strong>📬 Next Step:</strong><br>
                 After downloading, attach the WAV file and email it to: <strong>aymljku@gmail.com</strong>
             </div>
             <div class="button-group">
-                <button class="secondary-btn" id="resetBtn">Record Another</button>
+                <button class="secondary-btn" id="resetBtn">🔄 Record Another</button>
             </div>
         </div>
 
@@ -266,91 +597,35 @@
         let analyser = null;
         let microphone = null;
 
-        // Gujarati sentence suggestions for each emotion with English translations
+        // Gujarati sentence suggestions
         const gujaratiSentences = {
             angry: {
-                sentences: [
-                    "આ શું છે? તમે મને કેમ એમ કર્યું?",
-                    "હું ખૂબ નારાજ છું અને તમનો કોઈ સમર્થન નથી છે!",
-                    "આ અસ્વીકાર્ય છે અને મને આ બધું ખતમ કરવું છે!"
-                ],
-                translations: [
-                    "What is this? Why did you do this to me?",
-                    "I am very angry and have no support from you!",
-                    "This is unacceptable and I need to end this!"
-                ]
+                sentences: ["આ શું છે? તમે મને કેમ એમ કર્યું?", "હું ખૂબ નારાજ છું!", "આ અસ્વીકાર્ય છે!"],
+                translations: ["What is this? Why did you do this?", "I am very angry!", "This is unacceptable!"]
             },
             calm: {
-                sentences: [
-                    "હું શાંત છું અને વધુ સારું અનુભવ કરું છું.",
-                    "સમસ્યાઓ હંમેશા ઉકેલી શકાય છે અને હું તેને સમજું છું.",
-                    "આજ એક સુંદર દિવસ છે અને હું તેનો આનંદ લઈ રહ્યો છું."
-                ],
-                translations: [
-                    "I am calm and feeling better.",
-                    "Problems can always be solved and I understand that.",
-                    "Today is a beautiful day and I'm enjoying it."
-                ]
+                sentences: ["હું શાંત છું અને વધુ સારું અનુભવ કરું છું.", "સમસ્યાઓ હંમેશા ઉકેલી શકાય છે.", "આજ એક સુંદર દિવસ છે."],
+                translations: ["I am calm and feeling better.", "Problems can always be solved.", "Today is a beautiful day."]
             },
             fearful: {
-                sentences: [
-                    "મને ડર લાગે છે, શું આ સલામત છે?",
-                    "કૃપા કરીને મને સાથે રહો, મને એકલો વર્તવું નથી છે.",
-                    "આ શું થશે? મને ખબર નથી છે અને મને ડર લાગે છે."
-                ],
-                translations: [
-                    "I'm afraid, is this safe?",
-                    "Please stay with me, I don't want to be alone.",
-                    "What will happen? I don't know and I'm scared."
-                ]
+                sentences: ["મને ડર લાગે છે.", "શું આ સલામત છે?", "મને એકલો વર્તવું નથી છે."],
+                translations: ["I'm afraid.", "Is this safe?", "I don't want to be alone."]
             },
             happy: {
-                sentences: [
-                    "હું ખૂબ ખુશ છું અને આનંદિત છું!",
-                    "આ ખરેખર એક અદ્ભુત દિવસ છે અને હું તેનો સાથે છું!",
-                    "મારો હૃદય આનંદથી ભરેલો છે અને હું હસતો અટકી શકતો નથી!"
-                ],
-                translations: [
-                    "I am very happy and delighted!",
-                    "This is really a wonderful day and I'm with it!",
-                    "My heart is filled with joy and I can't stop smiling!"
-                ]
+                sentences: ["હું ખૂબ ખુશ છું!", "આ એક અદ્ભુત દિવસ છે!", "મારો હૃદય આનંદથી ભરેલો છે!"],
+                translations: ["I am very happy!", "This is a wonderful day!", "My heart is filled with joy!"]
             },
             neutral: {
-                sentences: [
-                    "આજ બીજો દિવસ છે.",
-                    "મને કોઈ વિશેષ લાગણી આવતી નથી, બસ સામાન્ય દિવસ છે.",
-                    "તે જે છે તે છે, કંઈ આશ્ચર્ય નથી."
-                ],
-                translations: [
-                    "Today is another day.",
-                    "I don't have any special feelings, just an ordinary day.",
-                    "It is what it is, nothing surprising."
-                ]
+                sentences: ["આજ બીજો દિવસ છે.", "તે જે છે તે છે.", "મને કોઈ વિશેષ લાગણી આવતી નથી."],
+                translations: ["Today is another day.", "It is what it is.", "I don't have special feelings."]
             },
             sad: {
-                sentences: [
-                    "મને ખૂબ દુઃખ છે અને એકલો અનુભવ કરું છું.",
-                    "હું આશા કરતો હતો પણ મને નિરાશા મળી.",
-                    "આ બધું ખરાબ હોય છે અને મનોદશા ખરાબ છે."
-                ],
-                translations: [
-                    "I'm very sad and feeling alone.",
-                    "I was hoping but got disappointed.",
-                    "Everything is bad and my mood is low."
-                ]
+                sentences: ["મને ખૂબ દુઃખ છે.", "હું આશા કરતો હતો પણ નિરાશા મળી.", "આ બધું ખરાબ છે."],
+                translations: ["I'm very sad.", "I was hoping but got disappointed.", "Everything is bad."]
             },
             surprised: {
-                sentences: [
-                    "આ તો ખરેખર આશ્ચર્યજનક છે!",
-                    "હું આ સંભાવતો ન હતો, આ ખરેખર આશ્ચર્ય છે!",
-                    "ઓહો! આ તો એક મોટો આશ્ચર્ય છે જે મને લાગતો નથી હતો!"
-                ],
-                translations: [
-                    "This is really surprising!",
-                    "I didn't expect this, it's really a surprise!",
-                    "Oh! This is a big surprise I didn't anticipate!"
-                ]
+                sentences: ["આ તો ખરેખર આશ્ચર્યજનક છે!", "હું આ સંભાવતો ન હતો!", "ઓહો! આ તો મોટો આશ્ચર્ય છે!"],
+                translations: ["This is really surprising!", "I didn't expect this!", "Oh! This is a big surprise!"]
             }
         };
 
@@ -358,11 +633,32 @@
             const sentences = gujaratiSentences[emotion].sentences;
             const translations = gujaratiSentences[emotion].translations;
             const randomIndex = Math.floor(Math.random() * sentences.length);
-            return {
-                gujarati: sentences[randomIndex],
-                english: translations[randomIndex]
-            };
+            return { gujarati: sentences[randomIndex], english: translations[randomIndex] };
         }
+
+        // Create animated particles
+        function createParticles() {
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.top = Math.random() * 100 + 'vh';
+                particle.style.width = particle.style.height = Math.random() * 5 + 2 + 'px';
+                particle.style.background = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 0.5})`;
+                document.body.appendChild(particle);
+
+                gsap.to(particle, {
+                    duration: Math.random() * 3 + 2,
+                    x: (Math.random() - 0.5) * 200,
+                    y: (Math.random() - 0.5) * 200,
+                    opacity: 0,
+                    repeat: -1,
+                    yoyo: true
+                });
+            }
+        }
+
+        createParticles();
 
         const type = document.getElementById('type');
         const age = document.getElementById('age');
@@ -371,8 +667,8 @@
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
         const downloadBtn = document.getElementById('downloadBtn');
-        const resetBtn = document.getElementById('resetBtn');
         const emailBtn = document.getElementById('emailBtn');
+        const resetBtn = document.getElementById('resetBtn');
         const emotionBtns = document.querySelectorAll('.emotion-btn');
         const formSection = document.getElementById('formSection');
         const recordingSection = document.getElementById('recordingSection');
@@ -385,7 +681,6 @@
         const levelMeter = document.getElementById('levelMeter');
         let currentFilename = '';
 
-        // Emotion selection
         emotionBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 emotionBtns.forEach(b => b.classList.remove('selected'));
@@ -399,14 +694,6 @@
                 showMessage('Please fill all fields', 'error');
                 return false;
             }
-            if (type.value === 'child' && (age.value < 5 || age.value > 17)) {
-                showMessage('Child age must be 5-17', 'error');
-                return false;
-            }
-            if (type.value === 'adult' && (age.value < 18 || age.value > 110)) {
-                showMessage('Adult age must be 18+', 'error');
-                return false;
-            }
             return true;
         }
 
@@ -415,8 +702,6 @@
 
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-                // Setup audio analysis
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 analyser = audioContext.createAnalyser();
                 analyser.fftSize = 2048;
@@ -436,17 +721,16 @@
                 };
 
                 mediaRecorder.start();
-                formSection.classList.add('hidden');
+                gsap.to(formSection, { duration: 0.5, opacity: 0, y: -20, onComplete: () => {
+                    formSection.classList.add('hidden');
+                }});
                 recordingSection.classList.remove('hidden');
-                downloadSection.classList.add('hidden');
+                gsap.fromTo(recordingSection, { opacity: 0, y: 20 }, { duration: 0.5, opacity: 1, y: 0 });
 
-                // Show Gujarati sentence suggestion
-                const emotionKey = type.value === 'child' ? selectedEmotion : (emotionBtns[emotionIndex] ? emotionBtns[emotionIndex].dataset.emotion : selectedEmotion);
                 const sentence = getRandomSentence(selectedEmotion);
                 document.getElementById('gujaratiSuggestion').textContent = sentence.gujarati;
                 document.getElementById('englishTranslation').textContent = `(${sentence.english})`;
 
-                // Timer
                 timerInterval = setInterval(() => {
                     seconds++;
                     const mins = Math.floor(seconds / 60);
@@ -455,10 +739,9 @@
                     if (seconds >= 300) stopRecording();
                 }, 1000);
 
-                // Level monitoring
                 monitorLevel();
             } catch (err) {
-                showMessage('❌ Microphone error. Please check permissions.', 'error');
+                showMessage('❌ Microphone error. Check permissions.', 'error');
             }
         });
 
@@ -489,60 +772,66 @@
         }
 
         async function processAudio() {
-            formSection.classList.add('hidden');
-            recordingSection.classList.add('hidden');
+            gsap.to(recordingSection, { duration: 0.5, opacity: 0, y: 20, onComplete: () => {
+                recordingSection.classList.add('hidden');
+            }});
             processingSection.classList.remove('hidden');
+            gsap.fromTo(processingSection, { opacity: 0, y: 20 }, { duration: 0.5, opacity: 1, y: 0 });
 
             try {
-                // Create audio blob and decode
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 const arrayBuffer = await audioBlob.arrayBuffer();
                 const decoded = await audioContext.decodeAudioData(arrayBuffer);
 
-                // Resample to 48kHz
                 const resampled = resampleAudio(decoded, 48000);
-
-                // Normalize audio
                 const normalized = normalizeAudio(resampled);
-
-                // Quality check
                 const quality = checkQuality(normalized);
-
-                // Convert to WAV
                 const wavBlob = encodeWAV(normalized, 48000);
 
-                // Create download link
                 const audioUrl = URL.createObjectURL(wavBlob);
                 document.getElementById('audioPlayer').src = audioUrl;
 
-                // Generate unique ID
+                const timestamp = new Date().toISOString().split('T')[0];
                 const uniqueId = Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
                 const participantName = type.value === 'child' ? 'child' : (document.getElementById('nameInput').value || 'participant');
                 const filename = `${participantName}-${age.value}-${uniqueId}-48kHz.wav`;
                 currentFilename = filename;
 
                 successMsg.textContent = `✓ Recording processed: ${filename}`;
-                qualityInfo.innerHTML = `
-                    <strong>Audio Quality Report:</strong><br>
-                    Peak Level: ${(quality.peakLevel * 100).toFixed(1)}%<br>
-                    Duration: ${(normalized.length / 48000).toFixed(2)}s<br>
-                    Format: 48kHz Mono WAV
-                `;
-
-                if (quality.peakLevel < 0.1) {
-                    qualityInfo.innerHTML += '<br>⚠️ Warning: Audio is very quiet. Please re-record closer to microphone.';
-                }
+                qualityInfo.innerHTML = `<strong>Audio Quality:</strong><br>Peak: ${(quality.peakLevel * 100).toFixed(1)}% | Duration: ${(normalized.length / 48000).toFixed(2)}s | Format: 48kHz WAV`;
 
                 downloadBtn.onclick = () => downloadAudio(wavBlob, filename);
                 emailBtn.onclick = () => openEmailClient(filename);
 
-                processingSection.classList.add('hidden');
-                downloadSection.classList.remove('hidden');
+                gsap.to(processingSection, { duration: 0.5, opacity: 0, y: 20, onComplete: () => {
+                    processingSection.classList.add('hidden');
+                    downloadSection.classList.remove('hidden');
+                    gsap.fromTo(downloadSection, { opacity: 0, y: 20 }, { duration: 0.5, opacity: 1, y: 0 });
+                    createConfetti();
+                }});
 
             } catch (err) {
-                showMessage('❌ Processing error: ' + err.message, 'error');
-                processingSection.classList.add('hidden');
-                formSection.classList.remove('hidden');
+                showMessage('❌ Processing error', 'error');
+            }
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 30; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = '-10px';
+                confetti.style.background = ['#667eea', '#764ba2', '#f093fb', '#27ae60'][Math.floor(Math.random() * 4)];
+                document.body.appendChild(confetti);
+
+                gsap.to(confetti, {
+                    duration: Math.random() * 2 + 2,
+                    y: window.innerHeight + 10,
+                    x: (Math.random() - 0.5) * 200,
+                    rotation: Math.random() * 720,
+                    opacity: 0,
+                    onComplete: () => confetti.remove()
+                });
             }
         }
 
@@ -552,17 +841,14 @@
             const ratio = sourceSampleRate / targetSampleRate;
             const newLength = Math.round(sourceData.length / ratio);
             const resampled = new Float32Array(newLength);
-
             let offsetResult = 0;
             let offsetSource = 0;
             while (offsetResult < newLength) {
                 const nextSourceSamplePosition = Math.min(offsetSource + ratio, sourceData.length - 1);
                 const nextSourceSampleIndex = Math.floor(nextSourceSamplePosition);
                 const fractionBetweenSamples = nextSourceSamplePosition - nextSourceSampleIndex;
-
                 const sample0 = sourceData[Math.floor(offsetSource)];
                 const sample1 = sourceData[Math.ceil(offsetSource)] || sample0;
-
                 resampled[offsetResult] = sample0 * (1 - fractionBetweenSamples) + sample1 * fractionBetweenSamples;
                 offsetResult++;
                 offsetSource += ratio;
@@ -575,14 +861,11 @@
             for (let i = 0; i < audioData.length; i++) {
                 maxVal = Math.max(maxVal, Math.abs(audioData[i]));
             }
-
             const normalized = new Float32Array(audioData.length);
             const factor = maxVal > 0 ? 0.95 / maxVal : 1;
-
             for (let i = 0; i < audioData.length; i++) {
                 normalized[i] = audioData[i] * factor;
             }
-
             return normalized;
         }
 
@@ -597,42 +880,31 @@
         function encodeWAV(samples, sampleRate) {
             const buffer = new ArrayBuffer(44 + samples.length * 2);
             const view = new DataView(buffer);
-
             const writeString = (offset, string) => {
                 for (let i = 0; i < string.length; i++) {
                     view.setUint8(offset + i, string.charCodeAt(i));
                 }
             };
-
             const subChunk2Size = samples.length * 2;
-            const subChunk1Size = 16;
-            const audioFormat = 1;
-            const numChannels = 1;
-            const byteRate = sampleRate * numChannels * 2;
-            const blockAlign = numChannels * 2;
-            const bitsPerSample = 16;
-
             writeString(0, 'RIFF');
             view.setUint32(4, 36 + subChunk2Size, true);
             writeString(8, 'WAVE');
             writeString(12, 'fmt ');
-            view.setUint32(16, subChunk1Size, true);
-            view.setUint16(20, audioFormat, true);
-            view.setUint16(22, numChannels, true);
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
             view.setUint32(24, sampleRate, true);
-            view.setUint32(28, byteRate, true);
-            view.setUint16(32, blockAlign, true);
-            view.setUint16(34, bitsPerSample, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
             writeString(36, 'data');
             view.setUint32(40, subChunk2Size, true);
-
             let index = 44;
             for (let i = 0; i < samples.length; i++) {
                 const sample = Math.max(-1, Math.min(1, samples[i]));
                 view.setInt16(index, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
                 index += 2;
             }
-
             return new Blob([buffer], { type: 'audio/wav' });
         }
 
@@ -643,42 +915,38 @@
             a.download = filename;
             a.style.display = 'none';
             document.body.appendChild(a);
-
             setTimeout(() => {
                 a.click();
                 setTimeout(() => {
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
-                    showMessage('✓ WAV file downloaded! Email to: aymljku@gmail.com', 'success');
+                    showMessage('✓ WAV file downloaded!', 'success');
                 }, 100);
             }, 100);
+        }
+
+        function openEmailClient(filename) {
+            const emailAddress = 'aymljku@gmail.com';
+            const subject = encodeURIComponent(`Gujarati SER Audio Recording - ${filename}`);
+            const body = encodeURIComponent(`Hello,\n\nPlease find attached my recording.\n\nFilename: ${filename}\n\nThank you!`);
+            window.location.href = `mailto:${emailAddress}?subject=${subject}&body=${body}`;
         }
 
         resetBtn.addEventListener('click', () => {
             selectedEmotion = null;
             emotionBtns.forEach(b => b.classList.remove('selected'));
-            formSection.classList.remove('hidden');
             downloadSection.classList.add('hidden');
-            message.innerHTML = '';
+            gsap.fromTo(formSection, { opacity: 0, y: 20 }, { duration: 0.5, opacity: 1, y: 0, onStart: () => {
+                formSection.classList.remove('hidden');
+            }});
         });
 
-        function openEmailClient(filename) {
-            const emailAddress = 'aymljku@gmail.com';
-            const subject = encodeURIComponent(`Gujarati SER Audio Recording - ${filename}`);
-            const body = encodeURIComponent(
-                `Hello,\n\n` +
-                `Please find attached my Gujarati speech emotion recording.\n\n` +
-                `Filename: ${filename}\n\n` +
-                `Thank you for participating in the research.\n\n` +
-                `Best regards`
-            );
-
-            const mailtoLink = `mailto:${emailAddress}?subject=${subject}&body=${body}`;
-            window.location.href = mailtoLink;
-        }
-
         function showMessage(text, type) {
-            message.innerHTML = `<div class="message ${type}">${text}</div>`;
+            const msg = document.createElement('div');
+            msg.className = `message ${type}`;
+            msg.textContent = text;
+            message.appendChild(msg);
+            gsap.to(msg, { duration: 3, delay: 2, opacity: 0, onComplete: () => msg.remove() });
         }
     </script>
 </body>
