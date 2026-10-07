@@ -394,9 +394,9 @@
                 const audioUrl = URL.createObjectURL(wavBlob);
                 document.getElementById('audioPlayer').src = audioUrl;
 
-                // File info
-                const timestamp = new Date().toISOString().split('T')[0];
-                const filename = `${type.value}-${age.value}-${gender.value}-${selectedEmotion}-${timestamp}-48kHz.wav`;
+                // Generate unique ID
+                const uniqueId = Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+                const filename = `GSR-${uniqueId}-${type.value}-${age.value}-${gender.value}-${dialect.value}-${selectedEmotion}-48kHz.wav`;
 
                 successMsg.textContent = `✓ Recording processed: ${filename}`;
                 qualityInfo.innerHTML = `
