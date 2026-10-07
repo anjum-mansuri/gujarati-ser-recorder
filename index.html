@@ -238,6 +238,11 @@
             </div>
             <div id="qualityInfo" class="message info"></div>
             <button class="download-btn" id="downloadBtn">⬇️ Download WAV File</button>
+            <button class="download-btn" style="background: #3498db; margin-top: 10px;" id="emailBtn">📧 Send via Email</button>
+            <div style="background: #e3f2fd; padding: 12px; border-radius: 8px; margin: 15px 0; font-size: 12px; color: #1565c0;">
+                <strong>📬 Next Step:</strong><br>
+                After downloading, attach the WAV file and email it to: <strong>aymljku@gmail.com</strong>
+            </div>
             <div class="button-group">
                 <button class="secondary-btn" id="resetBtn">Record Another</button>
             </div>
@@ -264,6 +269,7 @@
         const stopBtn = document.getElementById('stopBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const resetBtn = document.getElementById('resetBtn');
+        const emailBtn = document.getElementById('emailBtn');
         const emotionBtns = document.querySelectorAll('.emotion-btn');
         const formSection = document.getElementById('formSection');
         const recordingSection = document.getElementById('recordingSection');
@@ -274,6 +280,7 @@
         const successMsg = document.getElementById('successMsg');
         const qualityInfo = document.getElementById('qualityInfo');
         const levelMeter = document.getElementById('levelMeter');
+        let currentFilename = '';
 
         // Emotion selection
         emotionBtns.forEach(btn => {
@@ -403,6 +410,7 @@
                 const uniqueId = Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
                 const participantName = type.value === 'child' ? 'child' : (document.getElementById('nameInput').value || 'participant');
                 const filename = `${participantName}-${age.value}-${uniqueId}-48kHz.wav`;
+                currentFilename = filename;
 
                 successMsg.textContent = `✓ Recording processed: ${filename}`;
                 qualityInfo.innerHTML = `
@@ -417,6 +425,7 @@
                 }
 
                 downloadBtn.onclick = () => downloadAudio(wavBlob, filename);
+                emailBtn.onclick = () => openEmailClient(filename);
 
                 processingSection.classList.add('hidden');
                 downloadSection.classList.remove('hidden');
@@ -543,6 +552,21 @@
             downloadSection.classList.add('hidden');
             message.innerHTML = '';
         });
+
+        function openEmailClient(filename) {
+            const emailAddress = 'aymljku@gmail.com';
+            const subject = encodeURIComponent(`Gujarati SER Audio Recording - ${filename}`);
+            const body = encodeURIComponent(
+                `Hello,\n\n` +
+                `Please find attached my Gujarati speech emotion recording.\n\n` +
+                `Filename: ${filename}\n\n` +
+                `Thank you for participating in the research.\n\n` +
+                `Best regards`
+            );
+
+            const mailtoLink = `mailto:${emailAddress}?subject=${subject}&body=${body}`;
+            window.location.href = mailtoLink;
+        }
 
         function showMessage(text, type) {
             message.innerHTML = `<div class="message ${type}">${text}</div>`;
