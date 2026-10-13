@@ -382,6 +382,63 @@
 
         .hidden { display: none; }
 
+        /* Thank you note with shimmer and blooming flowers */
+        .thank-you {
+            margin-top: 20px;
+            padding: 24px 18px;
+            border-radius: 16px;
+            text-align: center;
+            background: linear-gradient(110deg, #fdf2f8 30%, #ffffff 50%, #f3e8ff 70%);
+            background-size: 200% 100%;
+            border: 1px solid rgba(118, 75, 162, 0.2);
+            animation: thankFadeIn 1s ease-out both, shimmer 3s linear infinite;
+        }
+
+        @keyframes thankFadeIn {
+            from { opacity: 0; transform: translateY(16px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .flowers {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            font-size: 26px;
+        }
+
+        .flowers span {
+            display: inline-block;
+            animation: bloom 2.4s ease-in-out infinite;
+        }
+
+        .flowers span:nth-child(2) { animation-delay: 0.3s; }
+        .flowers span:nth-child(3) { animation-delay: 0.6s; }
+        .flowers span:nth-child(4) { animation-delay: 0.9s; }
+        .flowers span:nth-child(5) { animation-delay: 1.2s; }
+
+        @keyframes bloom {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.8; }
+            50% { transform: scale(1.25) rotate(12deg); opacity: 1; }
+        }
+
+        .thank-you-text {
+            margin-top: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #764ba2;
+        }
+
+        .thank-you-sub {
+            margin-top: 6px;
+            font-size: 13px;
+            color: #666;
+        }
+
         .audio-player {
             background: rgba(245, 245, 245, 0.8);
             backdrop-filter: blur(10px);
@@ -610,6 +667,15 @@
             </div>
         </div>
 
+        <!-- Thank you note, shown at the end of the download section -->
+        <div class="thank-you hidden" id="thankYou">
+            <div class="flowers">
+                <span>🌸</span><span>🌼</span><span>🌷</span><span>🌺</span><span>🌼</span>
+            </div>
+            <p class="thank-you-text">આભાર! Thank you for your recording.</p>
+            <p class="thank-you-sub">Your voice helps this research. 💜</p>
+        </div>
+
         <div id="message"></div>
     </div>
 
@@ -697,6 +763,7 @@
         const recordStatus = document.getElementById('recordStatus');
         const recordHint = document.getElementById('recordHint');
         const formSuggestion = document.getElementById('formSuggestion');
+        const thankYou = document.getElementById('thankYou');
         const downloadBtn = document.getElementById('downloadBtn');
         const emailBtn = document.getElementById('emailBtn');
         const resetBtn = document.getElementById('resetBtn');
@@ -860,6 +927,7 @@
                 gsap.to(processingSection, { duration: 0.5, opacity: 0, y: 20, onComplete: () => {
                     processingSection.classList.add('hidden');
                     downloadSection.classList.remove('hidden');
+                    thankYou.classList.remove('hidden');
                     gsap.fromTo(downloadSection, { opacity: 0, y: 20 }, { duration: 0.5, opacity: 1, y: 0 });
                     createConfetti();
                 }});
@@ -999,6 +1067,7 @@
             emotionBtns.forEach(b => b.classList.remove('selected'));
             formSuggestion.classList.add('hidden');
             downloadSection.classList.add('hidden');
+            thankYou.classList.add('hidden');
             gsap.fromTo(formSection, { opacity: 0, y: 20 }, { duration: 0.5, opacity: 1, y: 0, onStart: () => {
                 formSection.classList.remove('hidden');
             }});
