@@ -550,6 +550,13 @@
                 </div>
             </div>
 
+            <!-- Sentence suggestion, shown as soon as an emotion is selected -->
+            <div class="suggestion-box hidden" id="formSuggestion">
+                <p class="suggestion-label">📝 Suggested to say:</p>
+                <p id="formGujaratiSuggestion"></p>
+                <p id="formEnglishTranslation"></p>
+            </div>
+
             <button class="primary-btn" id="startBtn">🎙️ Start Recording</button>
         </div>
 
@@ -561,7 +568,7 @@
                 <p id="englishTranslation"></p>
             </div>
             <div class="recording-section">
-                <p style="font-size: 14px; color: #666; margin-bottom: 10px;">🎤 Recording...</p>
+                <p id="recordStatus" style="font-size: 14px; color: #666; margin-bottom: 10px;">🎙️ Read the sentence above, then press record when ready</p>
                 <div class="timer" id="timer">0:00</div>
                 <div class="quality-meter">
                     <p style="font-size: 11px; color: #666; margin-bottom: 8px; font-weight: 600;">Audio Level:</p>
@@ -569,8 +576,9 @@
                         <div class="meter-fill" id="levelMeter" style="width: 0%;"></div>
                     </div>
                 </div>
-                <button class="mic-button recording" id="stopBtn">⏹️</button>
-                <p style="font-size: 12px; color: #999; margin-top: 12px;">Click to stop</p>
+                <button class="mic-button" id="recordBtn" title="Start recording">🎙️</button>
+                <button class="mic-button recording hidden" id="stopBtn" title="Stop recording">⏹️</button>
+                <p id="recordHint" style="font-size: 12px; color: #999; margin-top: 12px;">Click the mic to start</p>
             </div>
         </div>
 
@@ -611,6 +619,7 @@
         let timerInterval;
         let seconds = 0;
         let selectedEmotion = null;
+        let selectedSentence = null;
         let audioContext = null;
         let analyser = null;
         let microphone = null;
@@ -684,6 +693,10 @@
         const dialect = document.getElementById('dialect');
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
+        const recordBtn = document.getElementById('recordBtn');
+        const recordStatus = document.getElementById('recordStatus');
+        const recordHint = document.getElementById('recordHint');
+        const formSuggestion = document.getElementById('formSuggestion');
         const downloadBtn = document.getElementById('downloadBtn');
         const emailBtn = document.getElementById('emailBtn');
         const resetBtn = document.getElementById('resetBtn');
@@ -704,6 +717,12 @@
                 emotionBtns.forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
                 selectedEmotion = btn.dataset.emotion;
+
+                // Show a Gujarati sentence for this emotion right away
+                selectedSentence = getRandomSentence(selectedEmotion);
+                document.getElementById('formGujaratiSuggestion').textContent = selectedSentence.gujarati;
+                document.getElementById('formEnglishTranslation').textContent = `(${selectedSentence.english})`;
+                formSuggestion.classList.remove('hidden');
             });
         });
 
@@ -729,6 +748,7 @@
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
                 seconds = 0;
+                timer.textContent = '0:00';
 
                 mediaRecorder.ondataavailable = (event) => {
                     audioChunks.push(event.data);
@@ -738,29 +758,44 @@
                     processAudio();
                 };
 
-                mediaRecorder.start();
                 gsap.to(formSection, { duration: 0.5, opacity: 0, y: -20, onComplete: () => {
                     formSection.classList.add('hidden');
                 }});
                 recordingSection.classList.remove('hidden');
                 gsap.fromTo(recordingSection, { opacity: 0, y: 20 }, { duration: 0.5, opacity: 1, y: 0 });
 
-                const sentence = getRandomSentence(selectedEmotion);
-                document.getElementById('gujaratiSuggestion').textContent = sentence.gujarati;
-                document.getElementById('englishTranslation').textContent = `(${sentence.english})`;
+                // Show the sentence chosen with the emotion; recording waits for the speaker
+                document.getElementById('gujaratiSuggestion').textContent = selectedSentence.gujarati;
+                document.getElementById('englishTranslation').textContent = `(${selectedSentence.english})`;
 
-                timerInterval = setInterval(() => {
-                    seconds++;
-                    const mins = Math.floor(seconds / 60);
-                    const secs = seconds % 60;
-                    timer.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
-                    if (seconds >= 300) stopRecording();
-                }, 1000);
-
-                monitorLevel();
+                recordStatus.textContent = '🎙️ Read the sentence above, then press record when ready';
+                recordHint.textContent = 'Click the mic to start';
+                recordBtn.classList.remove('hidden');
+                stopBtn.classList.add('hidden');
             } catch (err) {
                 showMessage('❌ Microphone error. Check permissions.', 'error');
             }
+        });
+
+        // Speaker starts recording manually
+        recordBtn.addEventListener('click', () => {
+            if (!mediaRecorder || mediaRecorder.state !== 'inactive') return;
+
+            mediaRecorder.start();
+            timerInterval = setInterval(() => {
+                seconds++;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                timer.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+                if (seconds >= 300) stopRecording();
+            }, 1000);
+
+            monitorLevel();
+
+            recordBtn.classList.add('hidden');
+            stopBtn.classList.remove('hidden');
+            recordStatus.textContent = '🔴 Recording...';
+            recordHint.textContent = 'Click to stop';
         });
 
         function monitorLevel() {
@@ -784,6 +819,7 @@
         stopBtn.addEventListener('click', stopRecording);
 
         function stopRecording() {
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
             mediaRecorder.stop();
             mediaRecorder.stream.getTracks().forEach(track => track.stop());
             clearInterval(timerInterval);
@@ -959,7 +995,9 @@
 
         resetBtn.addEventListener('click', () => {
             selectedEmotion = null;
+            selectedSentence = null;
             emotionBtns.forEach(b => b.classList.remove('selected'));
+            formSuggestion.classList.add('hidden');
             downloadSection.classList.add('hidden');
             gsap.fromTo(formSection, { opacity: 0, y: 20 }, { duration: 0.5, opacity: 1, y: 0, onStart: () => {
                 formSection.classList.remove('hidden');
