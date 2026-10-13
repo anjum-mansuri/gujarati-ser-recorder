@@ -14,11 +14,29 @@
             background-size: 400% 400%;
             animation: gradientShift 8s ease infinite;
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            overflow: hidden;
+            overflow-x: hidden;
+        }
+
+        /* Small screens: let the page scroll and tighten spacing */
+        @media (max-width: 600px) {
+            body {
+                align-items: flex-start;
+                padding: 12px;
+            }
+
+            .container {
+                padding: 24px 18px;
+                border-radius: 16px;
+            }
+
+            h1 {
+                font-size: 26px;
+            }
         }
 
         @keyframes gradientShift {
